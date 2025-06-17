@@ -5,44 +5,41 @@ const app = express();
 app.use(cors({ optionsSuccessStatus: 200 }));
 app.use(express.static('public'));
 
-app.get("/", function (req, res) {
-  res.sendFile(__dirname + '/views/index.html');
+// Homepage
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/views/index.html");
 });
 
-// ✅ /api → Returns today's date
+// ✅ This handles empty date: /api
 app.get("/api", (req, res) => {
-  const now = new Date(); // current moment
+  const now = new Date();
   res.json({
-    unix: now.getTime(),           // current time in milliseconds
-    utc: now.toUTCString()         // current time in UTC string
+    unix: now.valueOf(),       // or now.getTime()
+    utc: now.toUTCString()
   });
 });
 
-// ✅ /api/:date → Returns given date or error
+// ✅ This handles valid date/timestamp inputs: /api/:date
 app.get("/api/:date", (req, res) => {
-  const { date } = req.params;
+  const dateParam = req.params.date;
 
-  let parsedDate;
+  // Check if it's a number (timestamp)
+  let date = !isNaN(dateParam)
+    ? new Date(parseInt(dateParam))
+    : new Date(dateParam);
 
-  // If numeric (timestamp), parse as integer
-  if (/^\d+$/.test(date)) {
-    parsedDate = new Date(parseInt(date));
-  } else {
-    parsedDate = new Date(date);
-  }
-
-  // Handle invalid date
-  if (parsedDate.toString() === "Invalid Date") {
+  // Handle invalid dates
+  if (date.toString() === "Invalid Date") {
     return res.json({ error: "Invalid Date" });
   }
 
   res.json({
-    unix: parsedDate.getTime(),
-    utc: parsedDate.toUTCString()
+    unix: date.valueOf(),
+    utc: date.toUTCString()
   });
 });
 
-// Listener
-const listener = app.listen(process.env.PORT || 3000, function () {
-  console.log('Your app is listening on port ' + listener.address().port);
+// Server start
+const listener = app.listen(process.env.PORT || 3000, () => {
+  console.log("Your app is listening on port " + listener.address().port);
 });
