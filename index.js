@@ -18,9 +18,9 @@
         <li><a href="api">[project url]/api (Current Timestamp)</a></li>
       </ul>
 
-      <h2>Example Output (real-time):</h2>
+      <h2>Example Output:</h2>
       <p>
-        <code id="timestampOutput"></code>
+        <code>{"unix":1750118400000, "utc":"Tue, 17 Jun 2025 00:00:00 GMT"}</code>
       </p>
     </div>
 
@@ -29,14 +29,5 @@
         By <a href="https://www.freecodecamp.org/">freeCodeCamp.org</a>
       </p>
     </div>
-
-    <script>
-      const now = new Date();
-      const output = {
-        unix: now.getTime(),
-        utc: now.toUTCString()
-      };
-      document.getElementById('timestampOutput').textContent = JSON.stringify(output);
-    </script>
   </body>
 </html>
