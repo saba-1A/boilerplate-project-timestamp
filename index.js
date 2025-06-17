@@ -1,40 +1,42 @@
-const express = require('express');
-const cors = require('cors');
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Timestamp Microservice | freeCodeCamp.org</title>
+    <link rel="shortcut icon" href="https://cdn.freecodecamp.org/universal/favicons/favicon-32x32.png" type="image/x-icon"/>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
+    <link href="style.css" rel="stylesheet" type="text/css">
+  </head>
 
-const app = express();
-app.use(cors({ optionsSuccessStatus: 200 }));
-app.use(express.static('public'));
+  <body>
+    <h1>Timestamp Microservice</h1>
+    <hr />
+    <div class="container">
+      <h2>Example Usage:</h2>
+      <ul>
+        <li><a href="api/2025-06-17">[project url]/api/2025-06-17</a></li>
+        <li><a href="api/1750118400000">[project url]/api/1750118400000</a></li>
+        <li><a href="api">[project url]/api (Current Timestamp)</a></li>
+      </ul>
 
-app.get("/", function (req, res) {
-  res.sendFile(__dirname + '/views/index.html');
-});
+      <h2>Example Output (real-time):</h2>
+      <p>
+        <code id="timestampOutput"></code>
+      </p>
+    </div>
 
-// ✅ /api with no date returns current time
-app.get("/api", (req, res) => {
-  const now = new Date();
+    <div class="footer">
+      <p>
+        By <a href="https://www.freecodecamp.org/">freeCodeCamp.org</a>
+      </p>
+    </div>
 
-  res.json({
-    unix: now.getTime(),
-    utc: now.toUTCString()
-  });
-});
-
-// ✅ /api/:date route handles valid dates and timestamps
-app.get("/api/:date", (req, res) => {
-  const { date } = req.params;
-  const parsedDate = !isNaN(date) ? new Date(parseInt(date)) : new Date(date);
-
-  if (parsedDate.toString() === "Invalid Date") {
-    return res.json({ error: "Invalid Date" });
-  }
-
-  res.json({
-    unix: parsedDate.getTime(),
-    utc: parsedDate.toUTCString()
-  });
-});
-
-// Listener
-const listener = app.listen(process.env.PORT || 3000, () => {
-  console.log('Your app is listening on port ' + listener.address().port);
-});
+    <script>
+      const now = new Date();
+      const output = {
+        unix: now.getTime(),
+        utc: now.toUTCString()
+      };
+      document.getElementById('timestampOutput').textContent = JSON.stringify(output);
+    </script>
+  </body>
+</html>
