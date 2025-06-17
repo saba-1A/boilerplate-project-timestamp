@@ -9,14 +9,28 @@ app.get("/", function (req, res) {
   res.sendFile(__dirname + '/views/index.html');
 });
 
-// ✅ Single route to handle both /api and /api/:date
-app.get("/api/:date?", (req, res) => {
-  let dateString = req.params.date;
+// ✅ Handle empty date parameter: /api
+app.get("/api", (req, res) => {
+  const now = new Date();
+  res.json({
+    unix: now.getTime(),
+    utc: now.toUTCString()
+  });
+});
 
-  let date = !dateString ? new Date() :
-             !isNaN(dateString) ? new Date(parseInt(dateString)) :
-             new Date(dateString);
+// ✅ Handle date param: /api/:date
+app.get("/api/:date", (req, res) => {
+  const dateInput = req.params.date;
+  let date;
 
+  // Check if input is a timestamp
+  if (/^\d+$/.test(dateInput)) {
+    date = new Date(parseInt(dateInput));
+  } else {
+    date = new Date(dateInput);
+  }
+
+  // Handle invalid date
   if (date.toString() === "Invalid Date") {
     return res.json({ error: "Invalid Date" });
   }
@@ -27,6 +41,7 @@ app.get("/api/:date?", (req, res) => {
   });
 });
 
+// Listener
 const listener = app.listen(process.env.PORT || 3000, function () {
   console.log('Your app is listening on port ' + listener.address().port);
 });
