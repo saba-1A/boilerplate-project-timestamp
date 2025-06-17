@@ -5,41 +5,36 @@ const app = express();
 app.use(cors({ optionsSuccessStatus: 200 }));
 app.use(express.static('public'));
 
-// Homepage
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/views/index.html");
+app.get("/", function (req, res) {
+  res.sendFile(__dirname + '/views/index.html');
 });
 
-// ✅ This handles empty date: /api
+// ✅ /api with no date returns current time
 app.get("/api", (req, res) => {
   const now = new Date();
+
   res.json({
-    unix: now.valueOf(),       // or now.getTime()
+    unix: now.getTime(),
     utc: now.toUTCString()
   });
 });
 
-// ✅ This handles valid date/timestamp inputs: /api/:date
+// ✅ /api/:date route handles valid dates and timestamps
 app.get("/api/:date", (req, res) => {
-  const dateParam = req.params.date;
+  const { date } = req.params;
+  const parsedDate = !isNaN(date) ? new Date(parseInt(date)) : new Date(date);
 
-  // Check if it's a number (timestamp)
-  let date = !isNaN(dateParam)
-    ? new Date(parseInt(dateParam))
-    : new Date(dateParam);
-
-  // Handle invalid dates
-  if (date.toString() === "Invalid Date") {
+  if (parsedDate.toString() === "Invalid Date") {
     return res.json({ error: "Invalid Date" });
   }
 
   res.json({
-    unix: date.valueOf(),
-    utc: date.toUTCString()
+    unix: parsedDate.getTime(),
+    utc: parsedDate.toUTCString()
   });
 });
 
-// Server start
+// Listener
 const listener = app.listen(process.env.PORT || 3000, () => {
-  console.log("Your app is listening on port " + listener.address().port);
+  console.log('Your app is listening on port ' + listener.address().port);
 });
