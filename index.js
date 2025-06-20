@@ -1,94 +1,63 @@
-const express = require('express')
-const app = express()
-const cors = require('cors')
-require('dotenv').config()
-const bodyParser = require('body-parser')
-const mongoose = require('mongoose');
-mongoose.connect(process.env.MONGO_URI);
+// index.js
+// where your node app starts
 
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json())
+// init project
+var express = require('express');
+var app = express();
 
-app.use(cors())
-app.use(express.static('public'))
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/views/index.html')
+// enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
+// so that your API is remotely testable by FCC 
+var cors = require('cors');
+app.use(cors({optionsSuccessStatus: 200}));  // some legacy browsers choke on 204
+
+// http://expressjs.com/en/starter/static-files.html
+app.use(express.static('public'));
+
+// http://expressjs.com/en/starter/basic-routing.html
+app.get("/", function (req, res) {
+  res.sendFile(__dirname + '/views/index.html');
 });
 
-const listener = app.listen(process.env.PORT || 3000, () => {
-  console.log('Your app is listening on port ' + listener.address().port)
-})
 
-const userSchema = new mongoose.Schema({
-  username: String,
-  log: [mongoose.Schema.Types.Mixed]
-})
+// your first API endpoint... 
+app.get("/api/hello", function (req, res) {
+  res.json({greeting: 'hello API'});
+});
 
-let UserModel = mongoose.model('User', userSchema)
 
-app.post('/api/users', (req, res) => {
-  
-  const newUser = new UserModel({
-    username: req.body.username,
-    log: []
-  })
-  
-  newUser.save((err, data) => {
-    if (err) return console.error(err);
-    
-    UserModel.findOne({username: req.body.username}, (err, data) => {
-      if (err) return console.error(err)
-      res.send({username: req.body.username, _id: data._id})
-    })
-  })
-})
 
-app.get('/api/users', (req, res) => {
-  UserModel.find({}, (err, data) =>{
-    if (err) return console.error(err)
-    res.send(data)
-  })
-})
+// listen for requests :)
+var listener = app.listen(process.env.PORT, function () {
+  console.log('Your app is listening on port ' + listener.address().port);
+});
 
-app.post('/api/users/:_id/exercises', (req, res) => {
-   
-  const { description, duration } = req.body
-  const date = req.body.date ? new Date(req.body.date) : new Date()
-  const id = req.params._id
-  
-  UserModel.findById({_id: id}, (err, data) => {
-    if (err) return console.error(err)
+function unixToUTC(unixTime) {
+  const convertedDate = new Date(unixTime)
+  return convertedDate.toUTCString()
+}
 
-    const updatedLog = [...data.log, {description, duration: Number(duration), date: date.toDateString()}]
-    
-    UserModel.findOneAndUpdate({_id: id}, {log: updatedLog}, {new: true}, (err, updateDoc) => {
-      if (err) return console.error(err)
-    })
-    
-      res.send({_id: id, username: data.username, date: date.toDateString(), duration: Number(duration), description})
-  })
+function getCurrentUnixTime() {
+    const currentUnixTime = Date.now()
+    return {"unix": Number(currentUnixTime), "utc": unixToUTC(currentUnixTime)}
+}
 
-})
+function returnJson(date) {
+  if (!date) {
+    return getCurrentUnixTime()
+  } else {
+    let requestedDate = ""
+    if (date > 0) {
+      requestedDate = new Date(Number(date))
+    } else {
+      requestedDate = new Date(date)
+    }
+    const requestedUnixDate = requestedDate.getTime()
+    const requestedUtcDate = requestedDate.toUTCString()
+    if (!requestedUnixDate) {return { error : "Invalid Date" }}
+    return {"unix": Number(requestedDate.getTime()), "utc": requestedUtcDate}
+  }
+}
 
-app.get('/api/users/:_id/logs', (req, res) => {
-  
-   UserModel.findById({_id: req.params._id}, (err, data) => {
-     if (err) return console.error(err)
-     let log = data.log
-
-     if (req.query.from && req.query.to) {
-       const start = new Date(req.query.from)
-       const end = new Date(req.query.to)
-       log = log.filter(item => new Date(item.date) >= start && new Date(item.date) <= end)
-              .sort((a, b) => new Date(a.date) - new Date(b.date))
-     }
-
-     log = req.query.limit ? data.log.slice(0, req.query.limit) : data.log
-
-     const count = log.length
-     
-     res.send({username: data.username, count: count, _id: req.params._id, log: log})
-    
-   })
-
+app.get('/api/:date?', (req, res) => {
+  res.json(returnJson(req.params.date))
 })
